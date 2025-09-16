@@ -1,6 +1,0 @@
-"0",""
-"0","# Read them in as dataframes"
-"0","counts_df     <- read_csv(count_file)"
-"1","[38;5;232mNew names:
-[36m•[38;5;232m `` -> `...1`[39m
-"
