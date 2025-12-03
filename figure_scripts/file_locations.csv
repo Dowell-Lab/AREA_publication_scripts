@@ -1,0 +1,16 @@
+T21_Kallisto_deseq_df_first400,/Users/allenma/INLCUDE_2024/kallisto_20241030/kallisto_to_deseq_20241230/kallisto_to_DESeq_normcounts_200401.csv
+T21_Kallisto_deseq_df_HTP_nonwhitecells,/Users/allenma/INLCUDE_2024/kallisto_20241030/kallisto_to_deseq_20241230/kallisto_to_DESeq_normcounts_244998_HTP_notwhite.csv
+T21_Kallisto_deseq_df_X01-Hakonarson_notwhite,/Users/allenma/INLCUDE_2024/kallisto_20241030/kallisto_to_deseq_20241230/kallisto_to_DESeq_normcounts_244998_X01-Hakonarson_notwhite.csv
+T21_Disease_HP_df,/Shares/down/public/INLCUDE_2024/kallisto_20241030/selfannoated/full_HP_binary_attribute.csv 
+T21_Disease_MONDO_df,/Shares/down/public/INLCUDE_2024/kallisto_20241030/selfannoated/full_MONDO_binary_attribute.csv
+gtf_first_400,/Shares/down/public/INLCUDE_2024/kallisto_20241030/indir/gencode.v27.chr_patch_hapl_scaff.annotation.gtf
+gtf_other_T21_files,/Shares/down/public/INLCUDE_2024/kallisto_20241030/indir/gencode.v39.chr_patch_hapl_scaff.annotation.gtf
+Kalisto_tpm_df, 
+GTEX_blood_tpm,
+GTEX_blood_norm_counts, 
+counts_disesase_df,
+whichT21_filename,/Shares/down/public/INLCUDE_2024/kallisto_20241030/selfannoated/whichT21_filename.csv
+whichT21_participant,/Shares/down/public/INLCUDE_2024/kallisto_20241030/selfannoated/whichT21_participant.csv
+Ptsd_counts,
+ptsd_disease,
+include_participants_with_RNA_and_completeT21,/Shares/down/public/INLCUDE_2024/kallisto_20241030/selfannoated/include_participants_with_RNA_and_completeT21.csv
