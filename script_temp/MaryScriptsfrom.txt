@@ -1,0 +1,5 @@
+/Shares/down/public/HTP/RNAseq/scripts/
+/Shares/down/public/omics_databases/GTEX_hg38_RNA/scripts
+/Shares/down/public/forAREA/Neuroblastoma
+/Shares/down/public/forAREA/ptsd
+/Shares/down/public/INLCUDE_2024/kallisto_20241030/scripts
