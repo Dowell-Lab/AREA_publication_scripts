@@ -8,7 +8,7 @@ library(ggrepel)  # for better label placement
 
 
 
-indir = "/Shares/down/public/HTP//RNAseq/"
+indir = "/Shares/down/public/HTP/RNAseq/"
 #whichoutput="T21vsD21_DNAdosagecorrection_match"
 #whichoutput="T21vsD21_DNAdosagecorrection"
 whichoutput="T21vsD21_noDNAdosagecorrection"

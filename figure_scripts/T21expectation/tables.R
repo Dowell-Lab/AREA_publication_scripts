@@ -56,7 +56,7 @@ T21_Participants$genotype <- "T21"
 mosaic_T21_Participants$genotype <- "mosaic_T21"
 translocation_T21_Participants$genotype <- "translocation_T21"
 #mosaic_translocation_T21_Participants$genotype <- "mosaic_translocation_T21"
-#DS_T21_Participants$genotype <- "DS_T21"
+DS_T21_Participants$genotype <- "DS_T21"
 
 lookup <- bind_rows(
   D21_Participants,
@@ -153,41 +153,52 @@ count_bool_zscore <- function(wide_df, long_df, bool_cols, id_col = "Participant
     gene_id = character(0),
     column = character(0),
     with_condition = integer(0),
-    count_FALSE = integer(0),
-    count_FALSE_above_z = integer(0),
-    count_TRUE_above_z = integer(0),
-    count_FALSE_below_z = integer(0),
-    count_TRUE_below_z = integer(0),
+    n_wo_condition = integer(0),
+    n_wo_condition_above_z = integer(0),
+    n_w_condition_above_z = integer(0),
+    n_wo_condition_z_typical = integer(0),
+    n_w_condition_z_typical = integer(0),
     stringsAsFactors = FALSE
   )
   for (gn in gene_names){
     long_df_onegene <- subset(long_df, gene_id == gn)
     id_above_z <- unique(long_df_onegene[[id_col]][long_df_onegene[[zscore_col]] > zscore_threshold])
-    id_below_z <- unique(long_df_onegene[[id_col]][long_df_onegene[[zscore_col]] <= zscore_threshold])
+    id_z_typical <- unique(long_df_onegene[[id_col]][long_df_onegene[[zscore_col]] <= zscore_threshold])
     for (col in bool_cols) {
       bool_vals <- wide_df[[col]]
       ids_FALSE <- wide_df[[id_col]][bool_vals == "False"]
       ids_TRUE <- wide_df[[id_col]][bool_vals == "True"]
-      count_FALSE <- length(ids_FALSE)
-      count_TRUE <- length(ids_TRUE)
-      count_FALSE_above_z <- sum(ids_FALSE %in% id_above_z)
-      count_TRUE_above_z <- sum(ids_TRUE %in% id_above_z)
-      count_FALSE_below_z <- sum(ids_FALSE %in% id_below_z)
-      count_TRUE_below_z <- sum(ids_TRUE %in% id_below_z)
+      n_wo_condition <- length(ids_FALSE)
+      n_w_condition <- length(ids_TRUE)
+      n_wo_condition_above_z <- sum(ids_FALSE %in% id_above_z)
+      n_w_condition_above_z <- sum(ids_TRUE %in% id_above_z)
+      n_wo_condition_z_typical <- sum(ids_FALSE %in% id_z_typical)
+      n_w_condition_z_typical <- sum(ids_TRUE %in% id_z_typical)
       result <- rbind(result, data.frame(gene_id = gn,
                                          column = col,
-                                         count_TRUE = count_TRUE,
-                                         count_FALSE = count_FALSE,
-                                         count_FALSE_above_z = count_FALSE_above_z,
-                                         count_TRUE_above_z = count_TRUE_above_z,
-                                         count_FALSE_below_z = count_FALSE_below_z,
-                                         count_TRUE_below_z = count_TRUE_below_z,
+                                         n_w_condition = n_w_condition,
+                                         n_wo_condition = n_wo_condition,
+                                         n_wo_condition_above_z = n_wo_condition_above_z,
+                                         n_w_condition_above_z = n_w_condition_above_z,
+                                         n_wo_condition_z_typical = n_wo_condition_z_typical,
+                                         n_w_condition_z_typical = n_w_condition_z_typical,
                                          stringsAsFactors = FALSE
       ))
     }}
   return(result)
 }
 
+
+runhyper <- function(for_hypergeometirc_above){
+  for_hypergeometirc_above$n_world <- for_hypergeometirc_above$n_w_condition+for_hypergeometirc_above$n_wo_condition
+  for_hypergeometirc_above$above_z <- for_hypergeometirc_above$n_w_condition_above_z+for_hypergeometirc_above$n_wo_condition_above_z
+  for_hypergeometirc_above$typical_z <- for_hypergeometirc_above$n_w_condition_z_typical+for_hypergeometirc_above$n_wo_condition_z_typical
+  for_hypergeometirc_above$hypergpval = phyper(for_hypergeometirc_above$n_w_condition_above_z-1, for_hypergeometirc_above$n_w_condition, for_hypergeometirc_above$n_world-for_hypergeometirc_above$n_w_condition, for_hypergeometirc_above$above_z , lower.tail = FALSE, log.p = FALSE)
+  for_hypergeometirc_above$expectation = for_hypergeometirc_above$n_world*(for_hypergeometirc_above$n_w_condition/for_hypergeometirc_above$n_world)*(for_hypergeometirc_above$above_z/for_hypergeometirc_above$n_world)
+  for_hypergeometirc_above$per_w_above <- for_hypergeometirc_above$n_w_condition_above_z/for_hypergeometirc_above$above_z
+  for_hypergeometirc_above$per_w_typical <- for_hypergeometirc_above$n_w_condition_z_typical/for_hypergeometirc_above$typical_z
+  for_hypergeometirc_above <- for_hypergeometirc_above %>% arrange(hypergpval)
+  return(for_hypergeometirc_above)}
 
 T21_disorders_df <- disorders_df %>% filter(Participant %in% T21_Participants$Participant)
 T21_disorders_df_just_disorders <- T21_disorders_df %>% select(-Participant)
@@ -208,48 +219,29 @@ T21_Zscoredf <- Zscoredf %>% filter(Participant %in% T21_Participants$Participan
 
 zscore_threshold = 2
 zscore_col = "zscore"
-for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = "zscore", zscore_threshold = zscore_threshold)
-for_hypergeometirc_above$n_world <- for_hypergeometirc_above$count_TRUE+for_hypergeometirc_above$count_FALSE
-for_hypergeometirc_above$above_z <- for_hypergeometirc_above$count_TRUE_above_z+for_hypergeometirc_above$count_FALSE_above_z
-for_hypergeometirc_above$hypergpval = phyper(for_hypergeometirc_above$count_TRUE_above_z-1, for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$n_world-for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$above_z , lower.tail = FALSE, log.p = FALSE)
-for_hypergeometirc_above$expextation = for_hypergeometirc_above$n_world*(for_hypergeometirc_above$count_TRUE/for_hypergeometirc_above$n_world)*(for_hypergeometirc_above$above_z/for_hypergeometirc_above$n_world)
-for_hypergeometirc_above<- for_hypergeometirc_above %>% arrange(hypergpval)
-
+for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = zscore_col, zscore_threshold = zscore_threshold)
+for_hypergeometirc_above <- runhyper(for_hypergeometirc_above)
 filename = paste0(outdir, "T21_4hypergeometric_zscoretype_",zscore_col,"thres",zscore_threshold,".csv")
 write.csv(for_hypergeometirc_above, filename)
 
 zscore_threshold = 3
 zscore_col = "zscore"
-for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = "zscore", zscore_threshold = zscore_threshold)
-for_hypergeometirc_above$n_world <- for_hypergeometirc_above$count_TRUE+for_hypergeometirc_above$count_FALSE
-for_hypergeometirc_above$above_z <- for_hypergeometirc_above$count_TRUE_above_z+for_hypergeometirc_above$count_FALSE_above_z
-for_hypergeometirc_above$hypergpval = phyper(for_hypergeometirc_above$count_TRUE_above_z-1, for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$n_world-for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$above_z , lower.tail = FALSE, log.p = FALSE)
-for_hypergeometirc_above$expextation = for_hypergeometirc_above$n_world*(for_hypergeometirc_above$count_TRUE/for_hypergeometirc_above$n_world)*(for_hypergeometirc_above$above_z/for_hypergeometirc_above$n_world)
-for_hypergeometirc_above<- for_hypergeometirc_above %>% arrange(hypergpval)
-
+for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = zscore_col, zscore_threshold = zscore_threshold)
+for_hypergeometirc_above <- runhyper(for_hypergeometirc_above)
 filename = paste0(outdir, "T21_4hypergeometric_zscoretype_",zscore_col,"thres",zscore_threshold,".csv")
 write.csv(for_hypergeometirc_above, filename)
 
 zscore_threshold = 2
 zscore_col = "modzscore"
-for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = "zscore", zscore_threshold = zscore_threshold)
-for_hypergeometirc_above$n_world <- for_hypergeometirc_above$count_TRUE+for_hypergeometirc_above$count_FALSE
-for_hypergeometirc_above$above_z <- for_hypergeometirc_above$count_TRUE_above_z+for_hypergeometirc_above$count_FALSE_above_z
-for_hypergeometirc_above$hypergpval = phyper(for_hypergeometirc_above$count_TRUE_above_z-1, for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$n_world-for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$above_z , lower.tail = FALSE, log.p = FALSE)
-for_hypergeometirc_above$expextation = for_hypergeometirc_above$n_world*(for_hypergeometirc_above$count_TRUE/for_hypergeometirc_above$n_world)*(for_hypergeometirc_above$above_z/for_hypergeometirc_above$n_world)
-for_hypergeometirc_above<- for_hypergeometirc_above %>% arrange(hypergpval)
-
+for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = zscore_col, zscore_threshold = zscore_threshold)
+for_hypergeometirc_above <- runhyper(for_hypergeometirc_above)
 filename = paste0(outdir, "T21_4hypergeometric_zscoretype_",zscore_col,"thres",zscore_threshold,".csv")
 write.csv(for_hypergeometirc_above, filename)
 
+
 zscore_threshold = 3
 zscore_col = "modzscore"
-for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = "zscore", zscore_threshold = zscore_threshold)
-for_hypergeometirc_above$n_world <- for_hypergeometirc_above$count_TRUE+for_hypergeometirc_above$count_FALSE
-for_hypergeometirc_above$above_z <- for_hypergeometirc_above$count_TRUE_above_z+for_hypergeometirc_above$count_FALSE_above_z
-for_hypergeometirc_above$hypergpval = phyper(for_hypergeometirc_above$count_TRUE_above_z-1, for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$n_world-for_hypergeometirc_above$count_TRUE, for_hypergeometirc_above$above_z , lower.tail = FALSE, log.p = FALSE)
-for_hypergeometirc_above$expextation = for_hypergeometirc_above$n_world*(for_hypergeometirc_above$count_TRUE/for_hypergeometirc_above$n_world)*(for_hypergeometirc_above$above_z/for_hypergeometirc_above$n_world)
-for_hypergeometirc_above<- for_hypergeometirc_above %>% arrange(hypergpval)
-
+for_hypergeometirc_above <- count_bool_zscore(T21_disorders_df, T21_Zscoredf, bool_list, id_col = "Participant", zscore_col = zscore_col, zscore_threshold = zscore_threshold)
+for_hypergeometirc_above <- runhyper(for_hypergeometirc_above)
 filename = paste0(outdir, "T21_4hypergeometric_zscoretype_",zscore_col,"thres",zscore_threshold,".csv")
 write.csv(for_hypergeometirc_above, filename)
